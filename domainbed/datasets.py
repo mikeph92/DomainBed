@@ -14,6 +14,7 @@ from wilds.datasets.fmow_dataset import FMoWDataset
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
+
 DATASETS = [
     # Debug
     "Debug28",
@@ -38,6 +39,8 @@ DATASETS = [
     "SpawriousM2M_easy",
     "SpawriousM2M_medium",
     "SpawriousM2M_hard",
+    # CAMTEL dataset
+    "CAMTEL",
 ]
 
 def get_dataset_class(dataset_name):
@@ -266,6 +269,12 @@ class SVIRO(MultipleEnvironmentImageFolder):
         self.dir = os.path.join(root, "sviro/")
         super().__init__(self.dir, test_envs, hparams['data_augmentation'], hparams)
 
+class CAMTEL(MultipleEnvironmentImageFolder):
+    CHECKPOINT_FREQ = 300
+    ENVIRONMENTS = ["nucls", "pannuke", "ocelot"]
+    def __init__(self, root, test_envs, hparams):
+        self.dir = os.path.join(root, "CAMTEL/")
+        super().__init__(self.dir, test_envs, hparams['data_augmentation'], hparams)
 
 class WILDSEnvironment:
     def __init__(
