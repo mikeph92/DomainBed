@@ -16,6 +16,7 @@ import numpy as np
 import torch
 from collections import Counter
 from itertools import cycle
+from sklearn.metrics import roc_auc_score
 
 
 def distance(h1, h2):
@@ -234,6 +235,74 @@ def accuracy(network, loader, weights, device):
     network.train()
 
     return correct / total
+
+def auc_roc(network, loader, weights, device):
+    """
+    Compute the Area Under the Receiver Operating Characteristic curve (AUC-ROC)
+    for a given network and data loader.
+    
+    Args:
+        network: The neural network model
+        loader: Data loader providing batches of data
+        weights: Optional sample weights
+        device: Device to run the computation on
+        
+    Returns:
+        AUC-ROC score (float)
+    """
+    all_y = []
+    all_p = []
+    all_weights = []
+    weights_offset = 0
+    
+    network.eval()
+    with torch.no_grad():
+        for x, y in loader:
+            x = x.to(device)
+            y = y.to(device)
+            p = network.predict(x)
+            
+            if weights is None:
+                batch_weights = torch.ones(len(x))
+            else:
+                batch_weights = weights[weights_offset : weights_offset + len(x)]
+                weights_offset += len(x)
+            batch_weights = batch_weights.to(device)
+            
+            all_y.append(y.cpu().numpy())
+            
+            # For binary classification, we need probabilities
+            if p.size(1) == 1:
+                # Convert logits to probabilities if needed
+                p = torch.sigmoid(p).squeeze()
+            else:
+                # For multi-class, we keep the raw probabilities
+                p = torch.softmax(p, dim=1)
+            
+            all_p.append(p.cpu().numpy())
+            all_weights.append(batch_weights.cpu().numpy())
+    
+    network.train()
+    
+    # Concatenate all batches
+    y_true = np.concatenate(all_y)
+    y_pred = np.concatenate(all_p)
+    weights = np.concatenate(all_weights) if weights is not None else None
+    
+    # Handle different classification scenarios
+    try:
+        if len(y_pred.shape) == 1 or y_pred.shape[1] == 1:  # Binary classification
+            # Ensure y_pred is 1D for binary classification
+            if len(y_pred.shape) > 1:
+                y_pred = y_pred.flatten()
+            return roc_auc_score(y_true, y_pred, sample_weight=weights)
+        else:  # Multi-class classification
+            # Use one-vs-rest approach for multi-class
+            return roc_auc_score(y_true, y_pred, multi_class='ovr', sample_weight=weights)
+    except ValueError as e:
+        # Handle cases where AUC is not defined (e.g., only one class in the batch)
+        print(f"Warning: Could not compute AUC-ROC: {e}")
+        return float('nan')
 
 class Tee:
     def __init__(self, fname, mode="a"):

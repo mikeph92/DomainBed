@@ -231,6 +231,9 @@ if __name__ == "__main__":
             for name, loader, weights in evals:
                 acc = misc.accuracy(algorithm, loader, weights, device)
                 results[name+'_acc'] = acc
+                # Calculate AUC-ROC metric
+                auc = misc.auc_roc(algorithm, loader, weights, device)
+                results[name+'_auc'] = auc
 
             results['mem_gb'] = torch.cuda.max_memory_allocated() / (1024.*1024.*1024.)
 
