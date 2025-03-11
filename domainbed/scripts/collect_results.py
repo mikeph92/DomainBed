@@ -112,8 +112,13 @@ def print_results_tables(records, selection_method, latex):
         for r in grouped_records:
             r['records'] = merge_records(r['records'])
 
+    # Calculate both accuracy and AUC-ROC values
     grouped_records = grouped_records.map(lambda group:
-        { **group, "sweep_acc": selection_method.sweep_acc(group["records"]) }
+        { 
+            **group, 
+            "sweep_acc": selection_method.sweep_acc(group["records"]),
+            "sweep_auc": selection_method.sweep_auc(group["records"])
+        }
     ).filter(lambda g: g["sweep_acc"] is not None)
 
 
@@ -154,14 +159,38 @@ def print_results_tables(records, selection_method, latex):
             "Avg"
         ]
         header_text = (f"Dataset: {dataset}, "
-            f"model selection method: {selection_method.name}")
+            f"model selection method: {selection_method.name}, "
+            f"metric: Accuracy")
         print_table(table, header_text, alg_names, list(col_labels),
             colwidth=20, latex=latex)
+            
+        # Create AUC-ROC table for the dataset
+        auc_table = [[None for _ in [*test_envs, "Avg"]] for _ in alg_names]
+        for i, algorithm in enumerate(alg_names):
+            means = []
+            for j, test_env in enumerate(test_envs):
+                trial_aucs = (grouped_records
+                    .filter_equals(
+                        "dataset, algorithm, test_env",
+                        (dataset, algorithm, test_env)
+                    ).select("sweep_auc"))
+                mean, err, auc_table[i][j] = format_mean(trial_aucs, latex)
+                means.append(mean)
+            if None in means:
+                auc_table[i][-1] = "X"
+            else:
+                auc_table[i][-1] = "{:.1f}".format(sum(means) / len(means))
+                
+        auc_header_text = (f"Dataset: {dataset}, "
+            f"model selection method: {selection_method.name}, "
+            f"metric: AUC-ROC")
+        print_table(auc_table, auc_header_text, alg_names, list(col_labels),
+            colwidth=20, latex=latex)
 
-    # Print an "averages" table
+    # Print an "averages" table for accuracy
     if latex:
         print()
-        print("\\subsubsection{Averages}")
+        print("\\subsubsection{Accuracy Averages}")
 
     table = [[None for _ in [*dataset_names, "Avg"]] for _ in alg_names]
     for i, algorithm in enumerate(alg_names):
@@ -182,8 +211,36 @@ def print_results_tables(records, selection_method, latex):
             table[i][-1] = "{:.1f}".format(sum(means) / len(means))
 
     col_labels = ["Algorithm", *dataset_names, "Avg"]
-    header_text = f"Averages, model selection method: {selection_method.name}"
+    header_text = f"Accuracy Averages, model selection method: {selection_method.name}"
     print_table(table, header_text, alg_names, col_labels, colwidth=25,
+        latex=latex)
+        
+    # Print an "averages" table for AUC-ROC
+    if latex:
+        print()
+        print("\\subsubsection{AUC-ROC Averages}")
+
+    auc_table = [[None for _ in [*dataset_names, "Avg"]] for _ in alg_names]
+    for i, algorithm in enumerate(alg_names):
+        means = []
+        for j, dataset in enumerate(dataset_names):
+            trial_averages = (grouped_records
+                .filter_equals("algorithm, dataset", (algorithm, dataset))
+                .group("trial_seed")
+                .map(lambda trial_seed, group:
+                    group.select("sweep_auc").mean()
+                )
+            )
+            mean, err, auc_table[i][j] = format_mean(trial_averages, latex)
+            means.append(mean)
+        if None in means:
+            auc_table[i][-1] = "X"
+        else:
+            auc_table[i][-1] = "{:.1f}".format(sum(means) / len(means))
+
+    col_labels = ["Algorithm", *dataset_names, "Avg"]
+    header_text = f"AUC-ROC Averages, model selection method: {selection_method.name}"
+    print_table(auc_table, header_text, alg_names, col_labels, colwidth=25,
         latex=latex)
 
 if __name__ == "__main__":
