@@ -1,0 +1,61 @@
+Environment:
+	Python: 3.11.10
+	PyTorch: 2.4.1+cu121
+	Torchvision: 0.19.1+cu121
+	CUDA: 12.1
+	CUDNN: 90100
+	NumPy: 1.26.4
+	PIL: 10.4.0
+Args:
+	algorithm: TRM
+	checkpoint_freq: None
+	data_dir: /home/michael/data/domainbed/
+	dataset: CAMTEL
+	holdout_fraction: 0.2
+	hparams: None
+	hparams_seed: 1
+	output_dir: ./results/674b32041b2fdde1e045ce91ed78a315
+	save_model_every_checkpoint: False
+	seed: 308385252
+	skip_model_save: False
+	steps: None
+	task: domain_generalization
+	test_envs: [1, 2]
+	trial_seed: 0
+	uda_holdout_fraction: 0
+HParams:
+	batch_size: 39
+	class_balanced: False
+	cos_lambda: 2.2217779996347212e-05
+	data_augmentation: True
+	dinov2: False
+	freeze_bn: False
+	groupdro_eta: 0.01297606872689568
+	iters: 16
+	lars: False
+	linear_steps: 500
+	lr: 2.7028930742148706e-05
+	nonlinear_classifier: False
+	resnet18: False
+	resnet50_augmix: True
+	resnet_dropout: 0.5
+	vit: False
+	vit_attn_tune: False
+	vit_dropout: 0.1
+	weight_decay: 0.00044832883881609976
+/home/michael/anaconda3/lib/python3.11/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/home/michael/anaconda3/lib/python3.11/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=ResNet50_Weights.IMAGENET1K_V1`. You can also use `weights=ResNet50_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+Warning: Could not compute AUC-ROC: y should be a 1d array, got an array of shape (41575, 2) instead.
+Warning: Could not compute AUC-ROC: y should be a 1d array, got an array of shape (88021, 2) instead.
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/michael/DomainBed/domainbed/scripts/train.py", line 232, in <module>
+    acc = misc.accuracy(algorithm, loader, weights, device)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/michael/DomainBed/domainbed/lib/misc.py", line 229, in accuracy
+    batch_weights = batch_weights.to(device)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
