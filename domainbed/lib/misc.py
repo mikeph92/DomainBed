@@ -269,39 +269,84 @@ def auc_roc(network, loader, weights, device):
                 weights_offset += len(x)
             batch_weights = batch_weights.to(device)
             
+            # Convert labels to class indices if they're in one-hot format
+            if len(y.shape) > 1 and y.shape[1] > 1:
+                y = torch.argmax(y, dim=1)
+            
+            # Force to 1D array by flattening
+            y = y.flatten()
+            
             all_y.append(y.cpu().numpy())
             
-            # For binary classification, we need probabilities
-            if p.size(1) == 1:
-                # Convert logits to probabilities if needed
-                p = torch.sigmoid(p).squeeze()
-            else:
-                # For multi-class, we keep the raw probabilities
-                p = torch.softmax(p, dim=1)
-            
+            # Store raw predictions for later processing
+            # Don't convert to probabilities yet - we'll do that after determining classification type
             all_p.append(p.cpu().numpy())
             all_weights.append(batch_weights.cpu().numpy())
     
     network.train()
     
-    # Concatenate all batches
-    y_true = np.concatenate(all_y)
-    y_pred = np.concatenate(all_p)
-    weights = np.concatenate(all_weights) if weights is not None else None
-    
-    # Handle different classification scenarios
+    # Process collected data
     try:
-        if len(y_pred.shape) == 1 or y_pred.shape[1] == 1:  # Binary classification
-            # Ensure y_pred is 1D for binary classification
+        y_true = np.concatenate(all_y)
+        y_pred = np.concatenate(all_p)
+        weights = np.concatenate(all_weights) if weights is not None else None
+        
+        # Final check to ensure y_true is 1D
+        if len(y_true.shape) > 1:
+            y_true = y_true.reshape(-1)
+        
+        # Check if we have binary classification (only 2 unique classes)
+        is_binary = len(np.unique(y_true)) <= 2
+        
+        # Process predictions based on classification type
+        if is_binary:
+            # Binary classification case
+            
+            # Handle different prediction shapes for binary classification
             if len(y_pred.shape) > 1:
-                y_pred = y_pred.flatten()
+                if y_pred.shape[1] == 2:
+                    # If we have predictions for both classes [class 0, class 1]
+                    # Extract only the probability for the positive class (class 1)
+                    y_pred = y_pred[:, 1]
+                elif y_pred.shape[1] == 1:
+                    # If predictions are logits with shape (N, 1)
+                    y_pred = y_pred.reshape(-1)
+                    # Convert logits to probabilities if needed
+                    if np.min(y_pred) < 0 or np.max(y_pred) > 1:
+                        y_pred = 1 / (1 + np.exp(-y_pred))  # sigmoid
+            
+            # Ensure predictions are 1D
+            y_pred = y_pred.reshape(-1)
+            
+            # Calculate AUC-ROC for binary classification
             return roc_auc_score(y_true, y_pred, sample_weight=weights)
-        else:  # Multi-class classification
-            # Use one-vs-rest approach for multi-class
-            return roc_auc_score(y_true, y_pred, multi_class='ovr', sample_weight=weights)
+        else:
+            # Multi-class classification case
+            
+            # If predictions are not already probabilities, convert them
+            if len(y_pred.shape) > 1 and y_pred.shape[1] > 1:
+                # Multi-class with class probabilities
+                # Calculate AUC-ROC with OvR strategy
+                return roc_auc_score(y_true, y_pred, multi_class='ovr', average='macro', sample_weight=weights)
+            else:
+                # This shouldn't happen for multi-class, but handle it anyway
+                print("Warning: Unexpected prediction shape for multi-class AUC-ROC")
+                return float('nan')
+    
     except ValueError as e:
-        # Handle cases where AUC is not defined (e.g., only one class in the batch)
+        # Enhanced error diagnostics
         print(f"Warning: Could not compute AUC-ROC: {e}")
+        print(f"y_true shape: {y_true.shape}, unique values: {np.unique(y_true)}")
+        
+        if 'y_pred' in locals():
+            print(f"y_pred shape: {y_pred.shape}")
+            if len(y_pred.shape) > 1:
+                print(f"y_pred first few entries: {y_pred[:2]}")
+                print(f"y_pred[:, 1] first few entries: {y_pred[:2, 1] if y_pred.shape[1] > 1 else 'N/A'}")
+            else:
+                print(f"y_pred range: [{y_pred.min()}, {y_pred.max()}]")
+        
+        # Return NaN to indicate computation failure
         return float('nan')
 
 class Tee:
