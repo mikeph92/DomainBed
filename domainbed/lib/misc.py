@@ -269,6 +269,10 @@ def auc_roc(network, loader, weights, device):
                 weights_offset += len(x)
             batch_weights = batch_weights.to(device)
             
+            # Ensure y is 1D - if it's 2D (one-hot encoded), convert to class indices
+            if len(y.shape) > 1 and y.shape[1] > 1:
+                y = torch.argmax(y, dim=1)
+            
             all_y.append(y.cpu().numpy())
             
             # For binary classification, we need probabilities
@@ -288,6 +292,14 @@ def auc_roc(network, loader, weights, device):
     y_true = np.concatenate(all_y)
     y_pred = np.concatenate(all_p)
     weights = np.concatenate(all_weights) if weights is not None else None
+    
+    # Ensure y_true is 1D
+    if len(y_true.shape) > 1:
+        # If y_true is still 2D after our earlier check, flatten it or take argmax
+        if y_true.shape[1] > 1:
+            y_true = np.argmax(y_true, axis=1)
+        else:
+            y_true = y_true.flatten()
     
     # Handle different classification scenarios
     try:
