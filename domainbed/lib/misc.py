@@ -269,18 +269,24 @@ def auc_roc(network, loader, weights, device):
                 weights_offset += len(x)
             batch_weights = batch_weights.to(device)
             
-            # Ensure y is 1D - if it's 2D (one-hot encoded), convert to class indices
+            # Debug info
+            y_shape = y.shape
+            
+            # Convert labels to class indices if they're in one-hot format
             if len(y.shape) > 1 and y.shape[1] > 1:
                 y = torch.argmax(y, dim=1)
             
+            # Force to 1D array by flattening
+            y = y.flatten()
+            
             all_y.append(y.cpu().numpy())
             
-            # For binary classification, we need probabilities
-            if p.size(1) == 1:
-                # Convert logits to probabilities if needed
-                p = torch.sigmoid(p).squeeze()
-            else:
-                # For multi-class, we keep the raw probabilities
+            # Handle predictions based on their shape
+            if p.size(1) == 1:  # Binary classification
+                # Convert logits to probabilities
+                p = torch.sigmoid(p).flatten()
+            else:  # Multi-class classification
+                # Use class scores as is for multi-class ROC
                 p = torch.softmax(p, dim=1)
             
             all_p.append(p.cpu().numpy())
@@ -289,31 +295,34 @@ def auc_roc(network, loader, weights, device):
     network.train()
     
     # Concatenate all batches
-    y_true = np.concatenate(all_y)
-    y_pred = np.concatenate(all_p)
-    weights = np.concatenate(all_weights) if weights is not None else None
-    
-    # Ensure y_true is 1D
-    if len(y_true.shape) > 1:
-        # If y_true is still 2D after our earlier check, flatten it or take argmax
-        if y_true.shape[1] > 1:
-            y_true = np.argmax(y_true, axis=1)
-        else:
-            y_true = y_true.flatten()
-    
-    # Handle different classification scenarios
     try:
+        y_true = np.concatenate(all_y)
+        y_pred = np.concatenate(all_p)
+        weights = np.concatenate(all_weights) if weights is not None else None
+        
+        # Final check to ensure y_true is 1D
+        if len(y_true.shape) > 1:
+            y_true = y_true.reshape(-1)
+        
+        # Handle different classification scenarios
         if len(y_pred.shape) == 1 or y_pred.shape[1] == 1:  # Binary classification
-            # Ensure y_pred is 1D for binary classification
             if len(y_pred.shape) > 1:
-                y_pred = y_pred.flatten()
+                y_pred = y_pred.reshape(-1)
+            
+            # Binary classification with class indices 0 and 1
             return roc_auc_score(y_true, y_pred, sample_weight=weights)
         else:  # Multi-class classification
-            # Use one-vs-rest approach for multi-class
+            # Use OvR strategy for multi-class
             return roc_auc_score(y_true, y_pred, multi_class='ovr', sample_weight=weights)
+    
     except ValueError as e:
-        # Handle cases where AUC is not defined (e.g., only one class in the batch)
+        # Detailed error message for debugging
         print(f"Warning: Could not compute AUC-ROC: {e}")
+        print(f"y_true shape: {y_true.shape}, unique values: {np.unique(y_true)}")
+        if len(y_pred.shape) > 1:
+            print(f"y_pred shape: {y_pred.shape}")
+        else:
+            print(f"y_pred shape: {y_pred.shape}, range: [{y_pred.min()}, {y_pred.max()}]")
         return float('nan')
 
 class Tee:
