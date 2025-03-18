@@ -6,5 +6,6 @@ python -m domainbed.scripts.sweep launch\
        --output_dir='./results/'\
        --command_launcher multi_gpu\
        --datasets CAMTEL\
+       --single_test_envs \
        --n_hparams 5\
        --n_trials 1

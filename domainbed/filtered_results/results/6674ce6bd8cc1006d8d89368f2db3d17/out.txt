@@ -1,0 +1,53 @@
+Environment:
+	Python: 3.12.2
+	PyTorch: 2.5.1+cu124
+	Torchvision: 0.20.1+cu124
+	CUDA: 12.4
+	CUDNN: 90100
+	NumPy: 1.26.4
+	PIL: 11.0.0
+Args:
+	algorithm: Transfer
+	checkpoint_freq: None
+	data_dir: /home/michael/data/domainbed/
+	dataset: CAMTEL
+	holdout_fraction: 0.2
+	hparams: None
+	hparams_seed: 2
+	output_dir: ./results/6674ce6bd8cc1006d8d89368f2db3d17
+	save_model_every_checkpoint: False
+	seed: 248772933
+	skip_model_save: False
+	steps: None
+	task: domain_generalization
+	test_envs: [0, 2]
+	trial_seed: 0
+	uda_holdout_fraction: 0
+HParams:
+	batch_size: 25
+	beta1: 0.5
+	class_balanced: False
+	d_steps_per_g: 2
+	data_augmentation: True
+	delta: 2.3521685892612245
+	dinov2: False
+	freeze_bn: False
+	gda: True
+	lars: False
+	linear_steps: 500
+	lr: 5.6841898471378446e-05
+	lr_d: 6.269632842201235e-05
+	nonlinear_classifier: False
+	resnet18: False
+	resnet50_augmix: True
+	resnet_dropout: 0.5
+	t_lambda: 5.089108187638736
+	vit: False
+	vit_attn_tune: False
+	vit_dropout: 0.0
+	weight_decay: 0.005100223533962902
+	weight_decay_d: 0.004188460570199925
+/home/michael/anaconda3/lib/python3.12/site-packages/torchvision/models/_utils.py:208: UserWarning: The parameter 'pretrained' is deprecated since 0.13 and may be removed in the future, please use 'weights' instead.
+  warnings.warn(
+/home/michael/anaconda3/lib/python3.12/site-packages/torchvision/models/_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=ResNet50_Weights.IMAGENET1K_V1`. You can also use `weights=ResNet50_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
