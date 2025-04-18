@@ -41,6 +41,7 @@ DATASETS = [
     "SpawriousM2M_hard",
     # CAMTEL dataset
     "CAMTEL",
+    "CAMTEL_TIL"
 ]
 
 def get_dataset_class(dataset_name):
@@ -274,6 +275,13 @@ class CAMTEL(MultipleEnvironmentImageFolder):
     ENVIRONMENTS = ["nucls", "pannuke", "ocelot"]
     def __init__(self, root, test_envs, hparams):
         self.dir = os.path.join(root, "CAMTEL/")
+        super().__init__(self.dir, test_envs, hparams['data_augmentation'], hparams)
+
+class CAMTEL_TIL(MultipleEnvironmentImageFolder):
+    CHECKPOINT_FREQ = 300
+    ENVIRONMENTS = ["nucls", "lizard", "cptac", "austin"]
+    def __init__(self, root, test_envs, hparams):
+        self.dir = os.path.join(root, "CAMTEL_TIL/")
         super().__init__(self.dir, test_envs, hparams['data_augmentation'], hparams)
 
 class WILDSEnvironment:

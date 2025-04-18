@@ -49,7 +49,7 @@ ALGORITHMS = [
     'IB_ERM',
     # 'IB_IRM',
     # 'CAD',
-    # 'CondCAD',
+    'CondCAD',
     # 'Transfer',
     # 'CausIRL_CORAL',
     # # 'CausIRL_MMD',
