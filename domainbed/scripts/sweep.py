@@ -107,7 +107,6 @@ def make_args_list(n_trials, dataset_names, algorithms, n_hparams_from, n_hparam
                 else:
                     all_test_envs = all_test_env_combinations(
                         datasets.num_environments(dataset))
-                seed_hash = misc.seed_hash(dataset, algorithm, hparams_seed, trial_seed)
                 for test_envs in all_test_envs:
                     for hparams_seed in range(n_hparams_from, n_hparams):
                         train_args = {}
@@ -119,7 +118,7 @@ def make_args_list(n_trials, dataset_names, algorithms, n_hparams_from, n_hparam
                         train_args['data_dir'] = data_dir
                         train_args['task'] = task
                         train_args['trial_seed'] = trial_seed
-                        train_args['seed'] = seed_hash
+                        train_args['seed'] = misc.seed_hash(dataset, algorithm, hparams_seed, trial_seed)
                         if steps is not None:
                             train_args['steps'] = steps
                         if hparams is not None:
