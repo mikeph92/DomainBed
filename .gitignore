@@ -5,4 +5,4 @@ domainbed/data/*
 train_output/*
 domainbed/results/*
 domainbed/filtered_results/*
-domainbed/algorithm.py
+domainbed/algorithms.py
