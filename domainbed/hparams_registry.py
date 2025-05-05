@@ -221,7 +221,7 @@ def _hparams(algorithm, dataset, random_seed):
     if dataset in SMALL_IMAGES:
         _hparam('batch_size', 64, lambda r: int(2**r.uniform(3, 9)))
     elif algorithm == 'ARM':
-        _hparam('batch_size', 8, lambda r: 8)
+        _hparam('batch_size', 64, lambda r: 32)
     elif algorithm == 'RDM':
         if dataset in ['DomainNet', 'TerraIncognita']:
             _hparam('batch_size', 40, lambda r: int(r.uniform(30, 60)))
@@ -230,7 +230,7 @@ def _hparams(algorithm, dataset, random_seed):
     elif dataset == 'DomainNet':
         _hparam('batch_size', 32, lambda r: int(2**r.uniform(3, 5)))
     else:
-        _hparam('batch_size', 32, lambda r: int(2**r.uniform(3, 5.5)))
+        _hparam('batch_size', 128, lambda r: int(2**r.uniform(3, 5.5)))
 
     if algorithm in ['DANN', 'CDANN'] and dataset in SMALL_IMAGES:
         _hparam('lr_g', 1e-3, lambda r: 10**r.uniform(-4.5, -2.5))
